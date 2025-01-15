@@ -125,3 +125,14 @@ map("n", "<leader>gl", ":Git log<CR>", { desc = "Git log" })
 map("n", "<leader>gf", ":Gvdiffsplit<CR>", { desc = "Git diff vertical split" })
 map("n", "<leader>tp", ":RunPython<CR>", { desc = "Run Python file" })
 map("n", "<leader>tt", ":ToggleTerm<CR>", { desc = "Toggle terminal" })
+
+-- Add diagnostic toggle mapping
+map("n", "<leader>dt", function()
+  if vim.diagnostic.is_disabled() then
+    vim.diagnostic.enable()
+    vim.notify("Diagnostics enabled", vim.log.levels.INFO)
+  else
+    vim.diagnostic.disable()
+    vim.notify("Diagnostics disabled", vim.log.levels.INFO)
+  end
+end, { desc = "Toggle diagnostics" })

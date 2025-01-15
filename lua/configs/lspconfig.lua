@@ -14,86 +14,32 @@ local on_attach = function(client, bufnr)
   local current_preview_win = nil
   
   -- Function to show full documentation
-  local function show_full_doc(cword)
-    local pydoc_cmd = string.format("python -m pydoc %s", cword)
-    local pydoc_output = vim.fn.system(pydoc_cmd)
-    
-    -- Close any existing preview window
-    if current_preview_win and vim.api.nvim_win_is_valid(current_preview_win) then
-      vim.api.nvim_win_close(current_preview_win, true)
-      current_preview_win = nil
-    end
-    
-    if vim.v.shell_error == 0 then
-      vim.schedule(function()
-        local win_id = vim.api.nvim_open_win(vim.api.nvim_create_buf(false, true), true, {
-          relative = 'editor',
-          width = math.floor(vim.o.columns * 0.9),    -- 90% of screen width
-          height = math.floor(vim.o.lines * 0.85),    -- 85% of screen height
-          row = math.floor(vim.o.lines * 0.05),       -- 5% from top
-          col = math.floor(vim.o.columns * 0.05),     -- 5% from left
-          style = 'minimal',
-          border = 'rounded',
-          title = "Python Documentation",
-          title_pos = "center",
-        })
-        
-        local buf = vim.api.nvim_win_get_buf(win_id)
-        vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(pydoc_output, "\n"))
-        vim.api.nvim_buf_set_option(buf, 'filetype', 'markdown')
-        vim.api.nvim_buf_set_option(buf, 'modifiable', false)
-        vim.api.nvim_buf_set_option(buf, 'buftype', 'nofile')
-        vim.api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
-        
-        -- Enable normal mode navigation
-        vim.api.nvim_win_set_option(win_id, 'wrap', true)
-        vim.api.nvim_win_set_option(win_id, 'cursorline', true)
-        
-        -- Keymaps
-        local opts = { buffer = buf, noremap = true, silent = true }
-        vim.keymap.set('n', 'q', function() vim.api.nvim_win_close(win_id, true) end, opts)
-        vim.keymap.set('n', '<Esc>', function() vim.api.nvim_win_close(win_id, true) end, opts)
-        vim.keymap.set('n', '<CR>', function() vim.api.nvim_win_close(win_id, true) end, opts)
-        
-        -- Navigation keymaps
-        vim.keymap.set('n', 'j', 'j', opts)
-        vim.keymap.set('n', 'k', 'k', opts)
-        vim.keymap.set('n', '<C-d>', '<C-d>zz', opts)
-        vim.keymap.set('n', '<C-u>', '<C-u>zz', opts)
-        vim.keymap.set('n', 'G', 'G', opts)
-        vim.keymap.set('n', 'gg', 'gg', opts)
-        vim.keymap.set('n', '/', '/', opts)
-        vim.keymap.set('n', 'n', 'n', opts)
-        vim.keymap.set('n', 'N', 'N', opts)
-        
-        vim.api.nvim_win_set_cursor(win_id, {1, 0})
-
-        -- Add resize keymaps
-        local opts = { buffer = buf, noremap = true, silent = true }
-        -- Vertical resize
-        vim.keymap.set('n', '<C-Up>', function()
-          local height = vim.api.nvim_win_get_height(win_id)
-          vim.api.nvim_win_set_height(win_id, height + 2)
-        end, opts)
-        vim.keymap.set('n', '<C-Down>', function()
-          local height = vim.api.nvim_win_get_height(win_id)
-          vim.api.nvim_win_set_height(win_id, height - 2)
-        end, opts)
-        -- Horizontal resize
-        vim.keymap.set('n', '<C-Left>', function()
-          local width = vim.api.nvim_win_get_width(win_id)
-          vim.api.nvim_win_set_width(win_id, width - 2)
-        end, opts)
-        vim.keymap.set('n', '<C-Right>', function()
-          local width = vim.api.nvim_win_get_width(win_id)
-          vim.api.nvim_win_set_width(win_id, width + 2)
-        end, opts)
-        -- Reset size
-        vim.keymap.set('n', '<C-=>',  function()
-          vim.api.nvim_win_set_width(win_id, math.floor(vim.o.columns * 0.9))
-          vim.api.nvim_win_set_height(win_id, math.floor(vim.o.lines * 0.85))
-        end, opts)
-      end)
+  local function show_full_doc(cword, filetype)
+    if filetype == "python" then
+      -- Python-specific documentation using pydoc
+      local pydoc_cmd = string.format("python -m pydoc %s", cword)
+      local pydoc_output = vim.fn.system(pydoc_cmd)
+      return pydoc_output, vim.v.shell_error == 0
+    else
+      -- For other languages, use LSP hover with enhanced display
+      local params = vim.lsp.util.make_position_params()
+      local result = vim.lsp.buf_request_sync(0, 'textDocument/hover', params, 1000)
+      
+      if result and result[1] then
+        local hover = result[1].result
+        if hover and hover.contents then
+          local contents = hover.contents
+          if type(contents) == 'table' then
+            if contents.value then
+              return contents.value, true
+            elseif contents.language then
+              return contents.language, true
+            end
+          end
+          return tostring(contents), true
+        end
+      end
+      return nil, false
     end
   end
 
@@ -115,23 +61,28 @@ local on_attach = function(client, bufnr)
           for i = 1, math.min(3, #lines) do
             table.insert(quick_docs, lines[i])
           end
-          _, current_preview_win = vim.lsp.util.open_floating_preview(quick_docs, "python", {
+          local buf, win = vim.lsp.util.open_floating_preview(quick_docs, "python", {
             border = "rounded",
             max_width = 80,
           })
+          
+          -- Add keymaps for quick docs window
+          local opts = { buffer = buf, noremap = true, silent = true }
+          vim.keymap.set('n', 'q', function() vim.api.nvim_win_close(win, true) end, opts)
+          vim.keymap.set('n', '<Esc>', function() vim.api.nvim_win_close(win, true) end, opts)
+          vim.keymap.set('n', '<CR>', function() vim.api.nvim_win_close(win, true) end, opts)
         end
       end
     else
-      -- Non-Python logic
+      -- Non-Python logic with keymaps
       if client and client.server_capabilities and client.server_capabilities.hoverProvider then
-        vim.lsp.buf.hover()
-      else
-        local ok = pcall(vim.cmd, 'help ' .. cword)
-        if not ok then
-          local hover_ok = pcall(vim.lsp.buf.hover)
-          if not hover_ok then
-            vim.notify("No documentation found for: " .. cword, vim.log.levels.INFO)
-          end
+        local buf, win = vim.lsp.buf.hover()
+        if buf and win then
+          -- Add keymaps for LSP hover window
+          local opts = { buffer = buf, noremap = true, silent = true }
+          vim.keymap.set('n', 'q', function() vim.api.nvim_win_close(win, true) end, opts)
+          vim.keymap.set('n', '<Esc>', function() vim.api.nvim_win_close(win, true) end, opts)
+          vim.keymap.set('n', '<CR>', function() vim.api.nvim_win_close(win, true) end, opts)
         end
       end
     end
@@ -142,8 +93,34 @@ local on_attach = function(client, bufnr)
     local filetype = vim.bo.filetype
     local cword = vim.fn.expand('<cword>')
     
-    if filetype == "python" then
-      show_full_doc(cword)
+    local doc_content, success = show_full_doc(cword, filetype)
+    if success and doc_content then
+      vim.schedule(function()
+        local win_id = vim.api.nvim_open_win(vim.api.nvim_create_buf(false, true), true, {
+          relative = 'editor',
+          width = math.floor(vim.o.columns * 0.9),
+          height = math.floor(vim.o.lines * 0.85),
+          row = math.floor(vim.o.lines * 0.05),
+          col = math.floor(vim.o.columns * 0.05),
+          style = 'minimal',
+          border = 'rounded',
+          title = string.format("Documentation for %s", cword),
+          title_pos = "center",
+        })
+        
+        local buf = vim.api.nvim_win_get_buf(win_id)
+        vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(doc_content, "\n"))
+        vim.api.nvim_buf_set_option(buf, 'filetype', filetype)
+        vim.api.nvim_buf_set_option(buf, 'modifiable', false)
+        
+        -- Add keymaps to close the window
+        local opts = { buffer = buf, noremap = true, silent = true }
+        vim.keymap.set('n', 'q', function() vim.api.nvim_win_close(win_id, true) end, opts)
+        vim.keymap.set('n', '<Esc>', function() vim.api.nvim_win_close(win_id, true) end, opts)
+        vim.keymap.set('n', '<CR>', function() vim.api.nvim_win_close(win_id, true) end, opts)
+      end)
+    else
+      vim.notify("No documentation found for: " .. cword, vim.log.levels.INFO)
     end
   end, { buffer = bufnr, noremap = true, silent = true, desc = "Show full documentation" })
 
@@ -236,12 +213,22 @@ lspconfig.pyright.setup {
   end,
 }
 
--- Configure TypeScript with ts_ls (the new name)
-require("lspconfig").typescript_language_server.setup {
+-- Configure TypeScript LSP
+local util = require "lspconfig.util"
+
+require("lspconfig").ts_ls.setup {
   on_attach = on_attach,
   capabilities = capabilities,
-  filetypes = { "typescript", "javascript", "javascriptreact", "typescriptreact", "typescript.tsx" },
-  cmd = { "typescript-language-server", "--stdio" }
+  root_dir = util.root_pattern("package.json", "tsconfig.json", "jsconfig.json", ".git"),
+  single_file_support = true,
+  init_options = {
+    hostInfo = "neovim",
+    preferences = {
+      includeInlayParameterNameHints = "all",
+      includeInlayPropertyDeclarationTypeHints = true,
+      includeInlayFunctionLikeReturnTypeHints = true,
+    },
+  }
 }
 
 -- Configure other servers

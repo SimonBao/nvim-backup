@@ -4,8 +4,7 @@ M.setup_lsp = function(attach, capabilities)
   local lspconfig = require("lspconfig")
 
   local servers = {
-    "pyright",  -- Python
-    "tsserver", -- JavaScript/TypeScript
+    "pyright",  -- Python only
   }
 
   for _, lsp in ipairs(servers) do

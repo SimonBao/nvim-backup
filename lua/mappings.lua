@@ -34,3 +34,12 @@ map("n", "<leader>cd", function()
   -- Open NvimTree at that directory
   require("nvim-tree.api").tree.open({ path = file_dir })
 end, { desc = "Open tree at file dir" })
+
+-- Add these to your existing mappings
+map("n", "<leader>gs", ":Git<CR>", { desc = "Git status" })
+map("n", "<leader>gd", ":Gdiffsplit<CR>", { desc = "Git diff split" })
+map("n", "<leader>gb", ":Git blame<CR>", { desc = "Git blame" })
+map("n", "<leader>gl", ":Git log<CR>", { desc = "Git log" })
+map("n", "<leader>gf", ":Gvdiffsplit<CR>", { desc = "Git diff vertical split" })
+map("n", "<leader>tp", ":RunPython<CR>", { desc = "Run Python file" })
+map("n", "<leader>tt", ":ToggleTerm<CR>", { desc = "Toggle terminal" })

@@ -2,11 +2,9 @@ local M = {}
 
 M.general = {
   n = {
-    -- your existing normal mode mappings
-  },
-  i = {
-    -- your existing insert mode mappings
-  },
+    [";"] = { ";", "Repeat last f/F/t/T motion", opts = { noremap = true, silent = true } },
+    [":"] = { ":", "Enter command mode", opts = { noremap = true } },
+  }
 }
 
 M.lazygit = {

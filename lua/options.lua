@@ -19,3 +19,6 @@ end
 
 -- local o = vim.o
 -- o.cursorlineopt ='both' -- to enable cursorline!
+
+-- Add these lines to your existing options
+vim.o.sessionoptions="blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions"

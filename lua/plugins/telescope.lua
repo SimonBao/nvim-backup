@@ -14,12 +14,14 @@ return {
   },
   cmd = "Telescope",
   keys = {
+    { "<leader>ft", "<cmd>Telescope<CR>", desc = "Open Telescope" },
     { "<leader>ff", "<cmd>Telescope find_files<CR>", desc = "Find files" },
     { "<leader>fg", "<cmd>Telescope live_grep<CR>", desc = "Live grep" },
     { "<leader>fa", "<cmd>Telescope live_grep hidden=true no_ignore=true<CR>", desc = "Grep all files" },
     { "<leader>fb", "<cmd>Telescope buffers<CR>", desc = "Find buffers" },
     { "<leader>fh", "<cmd>Telescope help_tags<CR>", desc = "Help tags" },
     { "<leader>fr", "<cmd>Telescope frecency<CR>", desc = "Frecency search" },
+    { "<leader>fC", "<cmd>Telescope live_grep search_dirs=init.lua,lua,lazy-lock.json<CR>", desc = "Search config files" },
   },
   config = function()
     local telescope = require("telescope")

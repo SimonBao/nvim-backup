@@ -13,4 +13,22 @@ M.lazygit = {
   }
 }
 
+M.telescope = {
+  n = {
+    ["<leader>fc"] = {
+      function()
+        require("telescope.builtin").live_grep({
+          prompt_title = "Search Config Files",
+          search_dirs = {
+            "init.lua",
+            "lua",
+            "lazy-lock.json"
+          },
+        })
+      end,
+      "Search config files"
+    },
+  }
+}
+
 return M

@@ -4,6 +4,88 @@ require "nvchad.mappings"
 
 local map = vim.keymap.set
 
+-- Add the transform assignment function
+local function transform_assignment()
+    local line = vim.api.nvim_get_current_line()
+    
+    -- Get the indentation of the current line
+    local indent = line:match("^%s*")
+    
+    -- First clean up the line - more aggressive cleaning
+    local cleaned = line
+        :gsub("[%(%[{]", "")         -- Remove opening brackets/braces
+        :gsub("[%)%]}]", "")         -- Remove closing brackets/braces
+        :gsub("=%s*", "")            -- Remove equals and its spaces
+        :gsub("%s*,%s*", ",")        -- Normalize spaces around commas
+        :gsub("^%s*(.-)%s*$", "%1")  -- Trim outer whitespace
+    
+    if cleaned then
+        local assignments = {}
+        -- Split by comma, ignoring whitespace issues
+        for param in cleaned:gmatch("[^,]+") do
+            -- Clean up the parameter name
+            param = param:match("^%s*(.-)%s*$") -- Trim whitespace
+            if param ~= "" then
+                -- Add indentation to each line
+                table.insert(assignments, indent .. param .. " = " .. param)
+            end
+        end
+        
+        if #assignments > 0 then
+            -- Insert each assignment on a new line at the current position
+            local current_line = vim.api.nvim_win_get_cursor(0)[1] - 1
+            vim.api.nvim_buf_set_lines(0, current_line, current_line + 1, false, assignments)
+        else
+            vim.notify("No valid parameters found", vim.log.levels.WARN)
+        end
+    else
+        vim.notify("No parameters found in line", vim.log.levels.WARN)
+    end
+end
+
+-- Function to transform to assignments and copy to clipboard
+local function transform_assignment_copy()
+    local line = vim.api.nvim_get_current_line()
+    
+    -- Get the indentation of the current line
+    local indent = line:match("^%s*")
+    
+    -- Clean up the line
+    local cleaned = line
+        :gsub("[%(%[{]", "")         -- Remove opening brackets/braces
+        :gsub("[%)%]}]", "")         -- Remove closing brackets/braces
+        :gsub("=%s*", "")            -- Remove equals and its spaces
+        :gsub("%s*,%s*", ",")        -- Normalize spaces around commas
+        :gsub("^%s*(.-)%s*$", "%1")  -- Trim outer whitespace
+    
+    if cleaned then
+        local assignments = {}
+        -- Split by comma, ignoring whitespace issues
+        for param in cleaned:gmatch("[^,]+") do
+            -- Clean up the parameter name
+            param = param:match("^%s*(.-)%s*$") -- Trim whitespace
+            if param ~= "" then
+                -- Add indentation to each line
+                table.insert(assignments, indent .. param .. " = " .. param)
+            end
+        end
+        
+        if #assignments > 0 then
+            -- Join with newlines and copy to clipboard
+            local result = table.concat(assignments, "\n")
+            vim.fn.setreg('+', result)
+            vim.notify("Copied assignments to clipboard", vim.log.levels.INFO)
+        else
+            vim.notify("No valid parameters found", vim.log.levels.WARN)
+        end
+    else
+        vim.notify("No parameters found in line", vim.log.levels.WARN)
+    end
+end
+
+map("n", "<leader>ta", transform_assignment, { desc = "Transform to assignments" })
+map("n", "<leader>tc", transform_assignment_copy, { desc = "Copy assignments to clipboard" })
+
 map("n", ";", ":", { desc = "CMD enter command mode" })
 map("i", "jk", "<ESC>")
 vim.keymap.set('x', 'p', '"_dP', { noremap = true, silent = true })

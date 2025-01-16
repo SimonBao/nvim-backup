@@ -1,18 +1,20 @@
 return {
   "nvim-telescope/telescope.nvim",
+  cmd = "Telescope",
   dependencies = {
-    "nvim-treesitter/nvim-treesitter",
-    "nvim-lua/plenary.nvim",
+    { "nvim-treesitter/nvim-treesitter", lazy = true },
+    { "nvim-lua/plenary.nvim", lazy = true },
     {
       "nvim-telescope/telescope-fzf-native.nvim",
-      build = "make"
+      build = "make",
+      lazy = true,
     },
     {
       "nvim-telescope/telescope-frecency.nvim",
       dependencies = { "kkharji/sqlite.lua" },
+      lazy = true,
     },
   },
-  cmd = "Telescope",
   keys = {
     { "<leader>ft", "<cmd>Telescope<CR>", desc = "Open Telescope" },
     { "<leader>ff", "<cmd>Telescope find_files<CR>", desc = "Find files" },

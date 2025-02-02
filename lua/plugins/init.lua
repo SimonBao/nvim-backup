@@ -38,4 +38,18 @@ return {
   		},
   	},
   },
+  {
+    "mfussenegger/nvim-dap",
+    lazy = false,
+    dependencies = {
+      "rcarriga/nvim-dap-ui",
+      "theHamsta/nvim-dap-virtual-text",
+    },
+    config = function()
+      require("configs.dap")
+    end,
+    health = function()
+      require("configs.health").check()
+    end,
+  },
 }

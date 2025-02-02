@@ -57,6 +57,11 @@ return {
     config = function(_, opts)
       require("telescope").setup(opts)
       require("telescope").load_extension("fzf")
+      
+      -- Add keymaps for viewing keybindings and commands
+      local map = vim.keymap.set
+      map("n", "<leader>fk", "<cmd>Telescope keymaps<CR>", { desc = "Find keymaps" })
+      map("n", "<leader>fc", "<cmd>Telescope commands<CR>", { desc = "Find commands" })
     end,
   },
 } 

@@ -25,38 +25,149 @@ return {
         highlight_changed_variables = true,
         highlight_new_as_changed = false,
         show_stop_reason = true,
-        commented = true,        -- prefix virtual text with comment string
+        commented = true,
         only_first_definition = true,
-        all_references = true,   -- show virtual text for all references of a variable
+        all_references = true,
         clear_on_continue = false,
+        display_callback = function(variable, buf, stackframe, node, options)
+          if variable.type == 'string' then
+            return ' = "' .. variable.value .. '"'
+          elseif variable.type == 'number' then
+            return ' = ' .. variable.value
+          elseif variable.type == 'bool' then
+            return ' = ' .. tostring(variable.value)
+          end
+          return ' = ' .. variable.value
+        end,
+        virt_text_pos = 'eol',
+        all_frames = false,
+        virt_lines = false,
+        virt_text_win_col = nil
       })
 
-      -- Python configuration
-      dap.adapters.python = {
+      -- C# configuration
+      dap.adapters.coreclr = {
         type = 'executable',
-        command = 'python3',
-        args = { '-m', 'debugpy.adapter' },
+        command = 'netcoredbg',
+        args = {'--interpreter=vscode'}
       }
-      
-      dap.configurations.python = {
+
+      dap.configurations.cs = {
         {
-          type = 'python',
-          request = 'launch',
-          name = "Launch file",
-          program = "${file}",
-          console = "integratedTerminal",
-          pythonPath = function()
+          type = "coreclr",
+          name = "launch - netcoredbg",
+          request = "launch",
+          program = function()
             local cwd = vim.fn.getcwd()
-            if vim.fn.executable(cwd .. '/venv/bin/python') == 1 then
-              return cwd .. '/venv/bin/python'
-            elseif vim.fn.executable(cwd .. '/.venv/bin/python') == 1 then
-              return cwd .. '/.venv/bin/python'
-            else
-              return '/usr/local/bin/python3'
+            
+            -- Get project name from directory
+            local project_name = vim.fn.fnamemodify(cwd, ':t')
+            -- Look specifically for the DLL in the expected location
+            local dll_path = string.format('%s/bin/Debug/net9.0/%s.dll', cwd, project_name)
+            
+            if vim.fn.filereadable(dll_path) == 1 then
+              vim.notify("Using DLL: " .. dll_path)
+              return dll_path
             end
+            
+            -- If specific DLL not found, show error
+            vim.notify(
+              "Project DLL not found.\n" ..
+              "1. Make sure you've built the project (dotnet build)\n" ..
+              "2. Check if you're in the correct directory: " .. cwd .. "\n" ..
+              "3. Expected DLL path: " .. dll_path,
+              vim.log.levels.ERROR
+            )
+            return nil
           end,
+          cwd = "${workspaceFolder}",
+          stopAtEntry = true,
+          justMyCode = false,
+          console = "internalConsole",
+          env = {
+            ASPNETCORE_ENVIRONMENT = "Development",
+            DOTNET_SYSTEM_GLOBALIZATION_INVARIANT = "false",
+            LANG = "en_US.UTF-8",
+            LC_ALL = "en_US.UTF-8",
+          },
+          replConfiguration = {
+            scriptMode = true,
+            initializationScript = [[
+              using System;
+              using System.Collections.Generic;
+              using System.Linq;
+              using System.Text;
+              Console.OutputEncoding = System.Text.Encoding.UTF8;
+            ]],
+          },
+          logging = {
+            moduleLoad = false,
+            engineLogging = true,
+            programOutput = true,
+          },
         },
       }
+
+      -- Python configuration
+      local function ensure_debugpy()
+        local python_cmd = vim.fn.exepath('python3') or vim.fn.exepath('python')
+        if not python_cmd then
+          vim.notify("Python not found!", vim.log.levels.ERROR)
+          return false
+        end
+
+        -- Check if debugpy is installed
+        local handle = io.popen(python_cmd .. ' -c "import debugpy"')
+        if handle then
+          local result = handle:read("*a")
+          handle:close()
+          if result and result:match("ModuleNotFoundError") then
+            -- Try to install debugpy
+            vim.notify("Installing debugpy...", vim.log.levels.INFO)
+            os.execute(python_cmd .. " -m pip install debugpy")
+            
+            -- Verify installation
+            handle = io.popen(python_cmd .. ' -c "import debugpy"')
+            if handle then
+              result = handle:read("*a")
+              handle:close()
+              if result and result:match("ModuleNotFoundError") then
+                vim.notify("Failed to install debugpy. Please install it manually with: pip install debugpy", vim.log.levels.ERROR)
+                return false
+              end
+            end
+          end
+        end
+        return true
+      end
+
+      if ensure_debugpy() then
+        dap.adapters.python = {
+          type = 'executable',
+          command = vim.fn.exepath('python3') or vim.fn.exepath('python'),
+          args = { '-m', 'debugpy.adapter' },
+        }
+        
+        dap.configurations.python = {
+          {
+            type = 'python',
+            request = 'launch',
+            name = "Launch file",
+            program = "${file}",
+            console = "integratedTerminal",
+            pythonPath = function()
+              local cwd = vim.fn.getcwd()
+              if vim.fn.executable(cwd .. '/venv/bin/python') == 1 then
+                return cwd .. '/venv/bin/python'
+              elseif vim.fn.executable(cwd .. '/.venv/bin/python') == 1 then
+                return cwd .. '/.venv/bin/python'
+              else
+                return vim.fn.exepath('python3') or vim.fn.exepath('python')
+              end
+            end,
+          },
+        }
+      end
     end,
   },
   {
@@ -130,8 +241,28 @@ return {
           },
           {
             elements = {
-              "repl",
-              "console",
+              { 
+                id = "repl",
+                size = 0.5,
+                opts = {
+                  -- Enable UTF-8 encoding for REPL
+                  env = {
+                    PYTHONIOENCODING = "utf-8",
+                    LANG = "en_US.UTF-8",
+                  },
+                }
+              },
+              {
+                id = "console",
+                size = 0.5,
+                opts = {
+                  -- Enable UTF-8 encoding for console
+                  env = {
+                    PYTHONIOENCODING = "utf-8",
+                    LANG = "en_US.UTF-8",
+                  },
+                }
+              },
             },
             size = 0.25,
             position = "bottom",
@@ -144,6 +275,16 @@ return {
           mappings = {
             close = { "q", "<Esc>" },
           },
+        },
+        render = {
+          indent = 1,
+          max_value_lines = 100,
+          max_type_length = 100,
+          unicode = true,  -- Enable Unicode support
+        },
+        controls = {
+          enabled = true,
+          element = "repl",
         },
       })
 

@@ -34,3 +34,29 @@ map("n", "<leader>cd", function()
   -- Open NvimTree at that directory
   require("nvim-tree.api").tree.open({ path = file_dir })
 end, { desc = "Open tree at file dir" })
+
+-- Add after your existing mappings
+map("n", "<leader>nl", function()
+  require("noice").cmd("last")
+end, { desc = "Noice Last Message" })
+
+map("n", "<leader>nh", function()
+  require("noice").cmd("history")
+end, { desc = "Noice History" })
+
+map("n", "<leader>nd", function()
+  require("noice").cmd("dismiss")
+end, { desc = "Dismiss All" })
+
+-- Optional: Add scroll keymaps for hover doc
+map({ "n", "i", "s" }, "<c-f>", function()
+  if not require("noice.lsp").scroll(4) then
+    return "<c-f>"
+  end
+end, { silent = true, expr = true })
+
+map({ "n", "i", "s" }, "<c-b>", function()
+  if not require("noice.lsp").scroll(-4) then
+    return "<c-b>"
+  end
+end, { silent = true, expr = true })

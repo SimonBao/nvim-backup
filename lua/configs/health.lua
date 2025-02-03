@@ -40,6 +40,30 @@ function M.check()
   else
     health.report_warn("nvim-dap-ui is not installed (optional)")
   end
+
+  -- Check netcoredbg installation
+  local netcoredbg = vim.fn.exepath('netcoredbg')
+  if netcoredbg then
+    health.report_ok("netcoredbg found: " .. netcoredbg)
+  else
+    health.report_error("netcoredbg not found. Install with:\n" ..
+      "Ubuntu/Debian: curl -L https://github.com/Samsung/netcoredbg/releases/latest/download/netcoredbg-linux-amd64.tar.gz -o netcoredbg.tar.gz && " ..
+      "sudo tar -xvf netcoredbg.tar.gz -C /usr/local/bin/\n" ..
+      "macOS: brew install netcoredbg\n" ..
+      "Windows: scoop install netcoredbg")
+  end
+
+  -- Check dotnet SDK
+  local handle = io.popen("dotnet --version")
+  if handle then
+    local result = handle:read("*a")
+    handle:close()
+    if result and not result:match("command not found") then
+      health.report_ok("dotnet SDK found: " .. result:gsub("\n", ""))
+    else
+      health.report_error("dotnet SDK not found. Install from https://dotnet.microsoft.com/download")
+    end
+  end
 end
 
 return M 

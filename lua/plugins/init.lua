@@ -46,10 +46,7 @@ return {
       "theHamsta/nvim-dap-virtual-text",
     },
     config = function()
-      require("configs.dap")
-    end,
-    health = function()
-      require("configs.health").check()
+      require("plugins.dap")
     end,
   },
 }

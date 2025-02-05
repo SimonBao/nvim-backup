@@ -2,18 +2,13 @@ return {
   "williamboman/mason.nvim",
   dependencies = {
     "williamboman/mason-lspconfig.nvim",
+    "jay-babu/mason-nvim-dap.nvim",
     "WhoIsSethDaniel/mason-tool-installer.nvim",
   },
+  priority = 100,
   config = function()
     -- import mason
     local mason = require("mason")
-
-    -- import mason-lspconfig
-    local mason_lspconfig = require("mason-lspconfig")
-
-    local mason_tool_installer = require("mason-tool-installer")
-
-    -- enable mason and configure icons
     mason.setup({
       ui = {
         icons = {
@@ -24,6 +19,8 @@ return {
       },
     })
 
+    -- import mason-lspconfig
+    local mason_lspconfig = require("mason-lspconfig")
     mason_lspconfig.setup({
       -- list of servers for mason to install
       ensure_installed = {
@@ -38,9 +35,20 @@ return {
         "prismals",
         "pyright",
       },
+      automatic_installation = true,
     })
 
-    mason_tool_installer.setup({
+    -- import mason-dap
+    require("mason-nvim-dap").setup({
+      ensure_installed = {
+        "js-debug-adapter",
+        "python",
+      },
+      automatic_setup = true,
+    })
+
+    -- import mason-tool-installer
+    require("mason-tool-installer").setup({
       ensure_installed = {
         "prettier", -- prettier formatter
         "stylua", -- lua formatter

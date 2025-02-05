@@ -4,10 +4,23 @@ return {
   dependencies = {
     "hrsh7th/cmp-nvim-lsp",
     { "antosha417/nvim-lsp-file-operations", config = true },
-    { "folke/neodev.nvim", opts = {} },
+    {
+      "folke/neodev.nvim",
+      opts = {
+        library = {
+          plugins = { "nvim-dap-ui" },
+          types = true,
+        },
+      },
+    },
+    "williamboman/mason.nvim",
+    "williamboman/mason-lspconfig.nvim",
   },
   config = function()
-    -- import lspconfig plugin
+    -- Setup neodev first
+    require("neodev").setup()
+
+    -- Then import lspconfig
     local lspconfig = require("lspconfig")
 
     -- import mason_lspconfig plugin

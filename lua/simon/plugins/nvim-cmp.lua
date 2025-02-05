@@ -8,8 +8,13 @@ return {
       "L3MON4D3/LuaSnip",
       -- follow latest release.
       version = "v2.*", -- Replace <CurrentMajor> by the latest released major (first number of latest release)
-      -- install jsregexp (optional!).
-      build = "make install_jsregexp",
+      -- Use MSYS2's make for Windows
+      build = (function()
+        if vim.fn.has("win32") == 1 then
+          return [[c:\msys64\usr\bin\make install_jsregexp]]  -- Adjust this path if your MSYS2 is installed elsewhere
+        end
+        return "make install_jsregexp"
+      end)(),
     },
     "saadparwaiz1/cmp_luasnip", -- for autocompletion
     "rafamadriz/friendly-snippets", -- useful snippets

@@ -6,6 +6,7 @@ vim.g.loaded_python3_provider = 0
 vim.g.python3_host_prog = "C:\\Python313\\python.exe" -- Windows example
 -- vim.g.python3_host_prog = '/usr/bin/python3'  -- Unix example
 
+-- Load core configurations
 require("simon.core")
 require("simon.lazy")
 

@@ -32,7 +32,8 @@ return {
         host = "localhost",
         port = "${port}",
         executable = {
-          command = vim.fn.stdpath("data") .. "\\mason\\bin\\js-debug-adapter.cmd",
+          command = vim.fn.stdpath("data") .. 
+            (vim.fn.has('win32') == 1 and '\\mason\\bin\\js-debug-adapter.cmd' or '/mason/bin/js-debug-adapter'),
           args = { "${port}" },
         }
       }
@@ -75,18 +76,28 @@ return {
           name = "Launch file",
           program = "${file}",
           pythonPath = function()
+            local is_windows = vim.fn.has('win32') == 1
+            local separator = is_windows and '\\' or '/'
+            local venv_python = is_windows and 'Scripts\\python.exe' or 'bin/python'
+
             -- Detect if we're in a virtual environment
             if vim.env.VIRTUAL_ENV then
-              return vim.env.VIRTUAL_ENV .. "\\Scripts\\python.exe"
+              return vim.env.VIRTUAL_ENV .. separator .. venv_python
             end
+            
             -- Check for common virtual environment paths
             local cwd = vim.fn.getcwd()
-            for _, pattern in ipairs({ "\\venv\\", "\\.venv\\", "\\env\\", "\\.env\\" }) do
-              local path = cwd .. pattern .. "Scripts\\python.exe"
+            local patterns = is_windows 
+              and { '\\venv\\', '\\.venv\\', '\\env\\', '\\.env\\' }
+              or { '/venv/', '/.venv/', '/env/', '/.env/' }
+            
+            for _, pattern in ipairs(patterns) do
+              local path = cwd .. pattern .. venv_python
               if vim.fn.executable(path) == 1 then
                 return path
               end
             end
+            
             -- Fall back to system Python
             return vim.fn.exepath('python')
           end,

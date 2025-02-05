@@ -12,9 +12,20 @@ keymap.set("n", "<leader>cw", "<cmd>close<CR>", { desc = "Close current window" 
 keymap.set("n", "<C-z>", "u", { noremap = true, silent = true, desc = "Undo in normal mode" })
 keymap.set("i", "<C-z>", "<C-o>u", { noremap = true, silent = true, desc = "Undo in insert mode" })
 
--- tabs
-keymap.set("n", "<leader>to", "<cmd>tabnew<CR>", { desc = "Open new tab" }) -- open new tab
-keymap.set("n", "<leader>tx", "<cmd>tabclose<CR>", { desc = "Close current tab" }) -- close current tab
-keymap.set("n", "<leader>tn", "<cmd>tabn<CR>", { desc = "Go to next tab" }) --  go to next tab
-keymap.set("n", "<leader>tp", "<cmd>tabp<CR>", { desc = "Go to previous tab" }) --  go to previous tab
-keymap.set("n", "<leader>tf", "<cmd>tabnew %<CR>", { desc = "Open current buffer in new tab" }) --  move current buffer to new tab
+-- buffer navigation
+keymap.set("n", "<S-Tab>", "<cmd>bprevious<CR>", { desc = "Previous buffer" })
+keymap.set("n", "<Tab>", "<cmd>bnext<CR>", { desc = "Next buffer" })
+keymap.set("n", "x", "<cmd>bdelete<CR>", { desc = "Close buffer" })
+
+-- formatting
+keymap.set("n", "<leader>tf", function()
+  local conform = require("conform")
+  conform.setup({ format_on_save = { timeout_ms = 500, lsp_fallback = true } })
+  vim.notify("Format on save enabled", vim.log.levels.INFO)
+end, { desc = "Enable format on save" })
+
+keymap.set("n", "<leader>tF", function()
+  local conform = require("conform")
+  conform.setup({ format_on_save = false })
+  vim.notify("Format on save disabled", vim.log.levels.INFO)
+end, { desc = "Disable format on save" })

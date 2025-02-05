@@ -1,3 +1,23 @@
+-- Set up notification handling before loading anything else
+local notify_ok, notify = pcall(require, 'notify')
+if notify_ok then
+  vim.notify = setmetatable({
+    suppress_messages = {
+      "Defining diagnostic signs",
+      "checkhealth",
+    }
+  }, {
+    __call = function(self, msg, ...)
+      for _, suppress in ipairs(self.suppress_messages) do
+        if msg:match(suppress) then
+          return
+        end
+      end
+      return notify(msg, ...)
+    end,
+  })
+end
+
 -- Disable Python provider
 vim.g.loaded_python3_provider = 0
 

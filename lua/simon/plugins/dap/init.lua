@@ -5,10 +5,26 @@ return {
       "rcarriga/nvim-dap-ui",
       "williamboman/mason.nvim",
       "jay-babu/mason-nvim-dap.nvim",
+      "nvim-treesitter/nvim-treesitter",
+      "theHamsta/nvim-dap-virtual-text",
     },
     config = function()
       local dap = require("dap")
       local dapui = require("dapui")
+
+      -- Configure nvim-dap-virtual-text
+      require("nvim-dap-virtual-text").setup({
+        enabled = true,
+        enabled_commands = true,
+        highlight_changed_variables = true,
+        highlight_new_as_changed = false,
+        show_stop_reason = true,
+        commented = false,
+        only_first_definition = true,
+        all_references = false,
+        clear_on_continue = false,
+        virt_text_pos = vim.fn.has('nvim-0.10') == 1 and 'inline' or 'eol',
+      })
 
       -- JavaScript/Node setup
       dap.adapters["pwa-node"] = {
@@ -87,6 +103,18 @@ return {
       vim.keymap.set("n", "<leader>B", function()
         dap.set_breakpoint(vim.fn.input("Breakpoint condition: "))
       end, { desc = "Debug: Set Breakpoint" })
+
+      -- Add virtual text for DAP
+      vim.api.nvim_set_hl(0, 'DapBreakpoint', { ctermbg = 0, fg = '#993939', bg = '#31353f' })
+      vim.api.nvim_set_hl(0, 'DapLogPoint', { ctermbg = 0, fg = '#61afef', bg = '#31353f' })
+      vim.api.nvim_set_hl(0, 'DapStopped', { ctermbg = 0, fg = '#98c379', bg = '#31353f' })
+
+      -- Define signs with both gutter icons and line highlighting
+      vim.fn.sign_define('DapBreakpoint', { text='●', texthl='DapBreakpoint', linehl='DapBreakpoint', numhl='DapBreakpoint' })
+      vim.fn.sign_define('DapBreakpointCondition', { text='ﳁ', texthl='DapBreakpoint', linehl='DapBreakpoint', numhl='DapBreakpoint' })
+      vim.fn.sign_define('DapBreakpointRejected', { text='', texthl='DapBreakpoint', linehl='DapBreakpoint', numhl='DapBreakpoint' })
+      vim.fn.sign_define('DapLogPoint', { text='', texthl='DapLogPoint', linehl='DapLogPoint', numhl='DapLogPoint' })
+      vim.fn.sign_define('DapStopped', { text='', texthl='DapStopped', linehl='DapStopped', numhl='DapStopped' })
 
       -- Dap UI setup
       dapui.setup({

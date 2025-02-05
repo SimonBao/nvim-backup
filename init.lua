@@ -31,3 +31,11 @@ require("simon.core")
 require("simon.lazy")
 
 vim.o.shada = "!,'100,<50,s10,h"
+
+-- Check if we have the right encoding
+vim.opt.encoding = "utf-8"
+vim.opt.fileencoding = "utf-8"
+
+-- Explicitly set icons to use Nerd Font
+vim.g.webdevicons_enable = 1
+vim.g.webdevicons_enable_nerdtree = 1

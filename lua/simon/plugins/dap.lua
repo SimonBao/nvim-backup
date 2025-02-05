@@ -8,6 +8,10 @@ return {
   {
     "mfussenegger/nvim-dap",
     lazy = false,
+    dependencies = {
+      "nvim-neotest/nvim-nio",
+      "theHamsta/nvim-dap-virtual-text",
+    },
     config = function()
       local dap = require("dap")
       
@@ -25,9 +29,9 @@ return {
         highlight_changed_variables = true,
         highlight_new_as_changed = false,
         show_stop_reason = true,
-        commented = true,        -- prefix virtual text with comment string
+        commented = true,
         only_first_definition = true,
-        all_references = true,   -- show virtual text for all references of a variable
+        all_references = true,
         clear_on_continue = false,
       })
 
@@ -71,13 +75,11 @@ return {
           name = "launch - netcoredbg",
           request = "launch",
           program = function()
-            -- Find the dll in the build output directory
             local cmd = "find " .. vim.fn.getcwd() .. " -name '*.dll' -type f -path '*/bin/Debug/*'"
             local handle = io.popen(cmd)
             local result = handle:read("*a")
             handle:close()
             
-            -- If found, use it as default, otherwise use the standard path
             local default_path = #result > 0 and result:gsub("%s+$", "") or vim.fn.getcwd() .. '/bin/Debug/'
             return vim.fn.input('Path to dll: ', default_path, 'file')
           end,
@@ -97,7 +99,7 @@ return {
     config = function()
       local dap, dapui = require("dap"), require("dapui")
 
-      -- Basic debugging keymaps, feel free to change to your liking!
+      -- Basic debugging keymaps
       vim.keymap.set('n', '<F5>', dap.continue, { desc = 'Debug: Start/Continue' })
       vim.keymap.set('n', '<F1>', dap.step_into, { desc = 'Debug: Step Into' })
       vim.keymap.set('n', '<F2>', dap.step_over, { desc = 'Debug: Step Over' })
